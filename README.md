@@ -36,8 +36,8 @@ python3 -m http.server 8000
 
 ## Deploy
 
-Push เข้า `master` แล้ว GitHub Actions (`.github/workflows/deploy.yml`) จะ deploy ขึ้น GitHub Pages อัตโนมัติ
-ซึ่งจะ build แล้ว publish ไปที่ branch `gh-pages` (Settings → Pages → Deploy from a branch → `gh-pages` / root)
+Push เข้า `master` แล้ว GitHub Actions (`.github/workflows/deploy.yml`) จะ build และ deploy ขึ้น GitHub Pages อัตโนมัติ
+(ตั้งค่าครั้งเดียว: Settings → Pages → Build and deployment → Source: **GitHub Actions**) หรือกด Run workflow ในแท็บ Actions เพื่อ deploy เอง
 
 ## โครงสร้าง
 
