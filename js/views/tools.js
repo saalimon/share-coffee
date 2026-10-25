@@ -3,14 +3,15 @@
 import { $, $$, esc, fmtNum, clamp, parseNum, store, todayISO } from '../util.js';
 import { icon } from '../icons.js';
 import { GRINDS, ROASTS, REST } from '../data.js';
+import { t, L, getLang, locale } from '../i18n.js';
 import { springTo, springNumber, updateSeg } from '../motion.js';
 import { spotLayers } from '../ui.js';
 
 const KEY = 'sc.tools.v1';
 
 const EY_MODES = {
-  filter: { dose: 15, bev: 225, tds: 1.3, y: [0.9, 1.7], yStep: 0.2, ideal: [1.15, 1.35], bevLabel: 'น้ำกาแฟที่ได้ (g)' },
-  espresso: { dose: 18, bev: 36, tds: 9.5, y: [6, 14], yStep: 2, ideal: [8, 12], bevLabel: 'Yield (g)' },
+  filter: { dose: 15, bev: 225, tds: 1.3, y: [0.9, 1.7], yStep: 0.2, ideal: [1.15, 1.35], bevLabel: 'ey.bev' },
+  espresso: { dose: 18, bev: 36, tds: 9.5, y: [6, 14], yStep: 2, ideal: [8, 12], bevLabel: 'ey.yield' },
 };
 const X_RANGE = [14, 26];
 const CH = { W: 340, H: 246, L: 40, R: 330, T: 24, B: 208 };
@@ -32,13 +33,13 @@ function chartSvg(mode) {
   const cx = [(CH.L + ix[0]) / 2, (ix[0] + ix[1]) / 2, (ix[1] + CH.R) / 2];
   const cy = [(CH.T + iy[0]) / 2 + 3, (iy[0] + iy[1]) / 2 + 3, (iy[1] + CH.B) / 2 + 3];
   const zones = [
-    ['เข้ม · สกัดน้อย', 'เข้ม', 'เข้ม · สกัดมาก'],
-    ['สกัดน้อย', 'IDEAL', 'สกัดมาก'],
-    ['อ่อน · สกัดน้อย', 'อ่อน', 'อ่อน · สกัดมาก'],
+    [t('ey.zStrongUnder'), t('ey.zStrong'), t('ey.zStrongOver')],
+    [t('ey.zUnder'), 'IDEAL', t('ey.zOver')],
+    [t('ey.zWeakUnder'), t('ey.zWeak'), t('ey.zWeakOver')],
   ];
   let z = '';
-  zones.forEach((row, ri) => row.forEach((t, ci) => {
-    z += `<text class="zone ${t === 'IDEAL' ? 'zone-ideal' : ''}" x="${cx[ci]}" y="${cy[ri]}" text-anchor="middle">${t}</text>`;
+  zones.forEach((row, ri) => row.forEach((label, ci) => {
+    z += `<text class="zone ${label === 'IDEAL' ? 'zone-ideal' : ''}" x="${cx[ci]}" y="${cy[ri]}" text-anchor="middle">${esc(label)}</text>`;
   }));
   return `
     <svg class="chart" viewBox="0 0 ${CH.W} ${CH.H}" role="img" aria-label="Brew control chart">
@@ -60,24 +61,26 @@ export function render(root) {
     restType: saved.restType === 'espresso' ? 'espresso' : 'filter',
     roast: ROASTS.some((r) => r.id === saved.roast) ? saved.roast : 'medium',
     grind: GRINDS.some((g) => g.id === saved.grind) ? saved.grind : 'mfine',
-    cost: { price: 450, bag: 250, dose: 15, extra: 0, cafe: 80, ...(saved.cost || {}) },
+    costByLang: { en: { price: 18, bag: 340, dose: 15, extra: 0, cafe: 5, ...(saved.costByLang?.en || {}) }, th: { price: 450, bag: 250, dose: 15, extra: 0, cafe: 80, ...(saved.costByLang?.th || saved.cost || {}) } },
   };
-  const save = () => store.set(KEY, { eyMode: st.eyMode, ey: { filter: pick(st.ey.filter), espresso: pick(st.ey.espresso) }, roastDate: st.roastDate, restType: st.restType, roast: st.roast, grind: st.grind, cost: st.cost });
+  const save = () => store.set(KEY, { eyMode: st.eyMode, ey: { filter: pick(st.ey.filter), espresso: pick(st.ey.espresso) }, roastDate: st.roastDate, restType: st.restType, roast: st.roast, grind: st.grind, costByLang: st.costByLang });
   const pick = (o) => ({ dose: o.dose, bev: o.bev, tds: o.tds });
+  const cur = t('cost.cur');
+  const cost = st.costByLang[getLang()];
 
   root.innerHTML = `
     <section class="page-head wrap">
-      <p class="eyebrow" data-reveal><span class="dot"></span>Tools · เครื่องมือ</p>
+      <p class="eyebrow" data-reveal><span class="dot"></span>${t('tools.eyebrow')}</p>
       <h1 class="d-xl split">Dial it in.</h1>
-      <p class="lead muted" data-reveal>เครื่องมือเล็กๆ ที่ช่วยให้แก้วต่อไปดีกว่าเดิม — วัดการสกัด เช็กวันพักเมล็ด เลือกอุณหภูมิและระดับบด แปลงหน่วย และคิดต้นทุนต่อแก้ว</p>
+      <p class="lead muted" data-reveal>${t('tools.lead')}</p>
     </section>
 
     <section class="wrap tools-grid" data-stagger>
       <!-- Extraction yield -->
       <article class="card tool span-2" data-reveal id="eyTool">
         <div class="card-head">
-          <div><p class="eyebrow">${icon('drop', 'ic-sm')} Extraction yield</p><h2 class="card-title">วัดการสกัด (EY%)</h2></div>
-          <div class="seg seg-sm" id="eySeg" role="group" aria-label="ประเภท">
+          <div><p class="eyebrow">${icon('drop', 'ic-sm')} Extraction yield</p><h2 class="card-title">${t('ey.title')}</h2></div>
+          <div class="seg seg-sm" id="eySeg" role="group" aria-label="${t('ey.type')}">
             <span class="seg-ind" aria-hidden="true"></span>
             <button type="button" data-ey="filter">Filter</button>
             <button type="button" data-ey="espresso">Espresso</button>
@@ -86,8 +89,8 @@ export function render(root) {
         <div class="tool-grid-2">
           <div class="stack" style="gap:18px">
             <div class="inputs-3 keep">
-              <label class="field"><span class="label">กาแฟ (g)</span><span class="unit-input"><input class="input" id="eyDose" inputmode="decimal"><span class="u">g</span></span></label>
-              <label class="field"><span class="label" id="eyBevLbl">น้ำกาแฟที่ได้ (g)</span><span class="unit-input"><input class="input" id="eyBev" inputmode="decimal"><span class="u">g</span></span></label>
+              <label class="field"><span class="label">${t('ey.dose')}</span><span class="unit-input"><input class="input" id="eyDose" inputmode="decimal"><span class="u">g</span></span></label>
+              <label class="field"><span class="label" id="eyBevLbl"></span><span class="unit-input"><input class="input" id="eyBev" inputmode="decimal"><span class="u">g</span></span></label>
               <label class="field"><span class="label">TDS</span><span class="unit-input"><input class="input" id="eyTds" inputmode="decimal"><span class="u">%</span></span></label>
             </div>
             <div>
@@ -96,7 +99,7 @@ export function render(root) {
             </div>
             <div class="row" style="flex-wrap:wrap;gap:8px"><span class="badge" id="eyBadge"></span><span class="badge" id="tdsBadge"></span></div>
             <p class="verdict" id="eyVerdict"></p>
-            <p class="hint">EY = TDS × น้ำกาแฟที่ได้ ÷ กาแฟ · วัด TDS ด้วย refractometer · ช่วงแนะนำอิงจาก SCA Brewing Control Chart</p>
+            <p class="hint">${t('ey.hint')}</p>
           </div>
           <div id="eyChart"></div>
         </div>
@@ -106,34 +109,34 @@ export function render(root) {
       <article class="spot spot-sunset tool" data-reveal id="restTool">
         ${spotLayers(true)}
         <div class="card-head" style="margin-bottom:0">
-          <div><p class="eyebrow">${icon('calendar', 'ic-sm')} Bean rest</p><h2 class="card-title">เมล็ดพักมากี่วันแล้ว?</h2></div>
+          <div><p class="eyebrow">${icon('calendar', 'ic-sm')} Bean rest</p><h2 class="card-title">${t('rest.title')}</h2></div>
         </div>
         <div class="field-row">
-          <label class="field"><span class="label" style="color:rgba(255,255,255,.8)">วันที่คั่ว</span><input type="date" class="input" id="roastDate"></label>
-          <div class="field"><span class="label" style="color:rgba(255,255,255,.8)">ใช้ชงแบบ</span>
-            <div class="seg seg-sm" id="restSeg" role="group" aria-label="ประเภทการชง">
+          <label class="field"><span class="label" style="color:rgba(255,255,255,.8)">${t('rest.date')}</span><input type="date" class="input" id="roastDate"></label>
+          <div class="field"><span class="label" style="color:rgba(255,255,255,.8)">${t('rest.for')}</span>
+            <div class="seg seg-sm" id="restSeg" role="group" aria-label="${t('rest.for')}">
               <span class="seg-ind" aria-hidden="true"></span>
               <button type="button" data-rest="filter">Filter</button>
               <button type="button" data-rest="espresso">Espresso</button>
             </div>
           </div>
         </div>
-        <p class="big-out num"><span id="restDays">0</span><small>วันหลังคั่ว</small></p>
+        <p class="big-out num"><span id="restDays">0</span><small>${t('rest.days')}</small></p>
         <p class="meter-label" id="restLabel"></p>
         <div>
           <div class="rest-bar" id="restBar"><i class="rest-marker" id="restMarker"></i></div>
-          <div class="rest-legend" style="margin-top:8px"><span>คั่ว</span><span>30 วัน</span><span>60+ วัน</span></div>
+          <div class="rest-legend" style="margin-top:8px"><span>${t('rest.lRoast')}</span><span>${t('rest.l30')}</span><span>${t('rest.l60')}</span></div>
         </div>
       </article>
 
       <!-- Water temperature -->
       <article class="card tool" data-reveal id="tempTool">
         <div class="card-head" style="margin-bottom:0">
-          <div><p class="eyebrow">${icon('thermo', 'ic-sm')} Water temperature</p><h2 class="card-title">อุณหภูมิน้ำตามระดับคั่ว</h2></div>
+          <div><p class="eyebrow">${icon('thermo', 'ic-sm')} Water temperature</p><h2 class="card-title">${t('temp.title')}</h2></div>
         </div>
-        <div class="seg seg-sm" id="roastSeg" role="group" aria-label="ระดับการคั่ว" style="justify-self:start">
+        <div class="seg seg-sm" id="roastSeg" role="group" aria-label="${t('temp.roast')}" style="justify-self:start">
           <span class="seg-ind" aria-hidden="true"></span>
-          ${ROASTS.map((r) => `<button type="button" data-roast="${r.id}">${esc(r.label)}</button>`).join('')}
+          ${ROASTS.map((r) => `<button type="button" data-roast="${r.id}">${esc(L(r.label))}</button>`).join('')}
         </div>
         <div>
           <p class="big-out num" id="tempOut">90–94<small>°C</small></p>
@@ -144,25 +147,25 @@ export function render(root) {
           <div class="thermo-scale"><span>80°</span><span>85°</span><span>90°</span><span>95°</span><span>100°C</span></div>
         </div>
         <p class="verdict" id="tempNote"></p>
-        <p class="hint">SCA แนะนำน้ำ 90–96°C สำหรับการชงทั่วไป · บนที่สูงน้ำเดือดต่ำกว่า 100°C</p>
+        <p class="hint">${t('temp.hint')}</p>
       </article>
 
       <!-- Grind -->
       <article class="card tool span-2" data-reveal id="grindTool">
         <div class="card-head" style="margin-bottom:0">
-          <div><p class="eyebrow">${icon('grind', 'ic-sm')} Grind size</p><h2 class="card-title">ระดับการบด</h2></div>
+          <div><p class="eyebrow">${icon('grind', 'ic-sm')} Grind size</p><h2 class="card-title">${t('grind.title')}</h2></div>
         </div>
-        <div class="grind-scale" role="group" aria-label="เลือกระดับการบด">
+        <div class="grind-scale" role="group" aria-label="${t('grind.aria')}">
           ${GRINDS.map((g) => `<button type="button" class="grind-dot" data-grind="${g.id}"><i style="width:${g.size}px;height:${g.size}px"></i><span>${esc(g.en)}</span></button>`).join('')}
         </div>
         <div class="grind-detail" id="grindDetail"></div>
-        <p class="hint">ขนาดอนุภาคเป็นค่าโดยประมาณ แต่ละเครื่องบดตั้งค่าไม่เหมือนกัน — ใช้รสชาติเป็นตัวตัดสินสุดท้าย</p>
+        <p class="hint">${t('grind.hint')}</p>
       </article>
 
       <!-- Converter -->
       <article class="card tool" data-reveal id="convTool">
         <div class="card-head" style="margin-bottom:0">
-          <div><p class="eyebrow">${icon('swap', 'ic-sm')} Converter</p><h2 class="card-title">แปลงหน่วย</h2></div>
+          <div><p class="eyebrow">${icon('swap', 'ic-sm')} Converter</p><h2 class="card-title">${t('conv.title')}</h2></div>
         </div>
         <div class="conv" id="conv"></div>
       </article>
@@ -170,19 +173,19 @@ export function render(root) {
       <!-- Cost -->
       <article class="card tool" data-reveal id="costTool">
         <div class="card-head" style="margin-bottom:0">
-          <div><p class="eyebrow">${icon('coin', 'ic-sm')} Cost per cup</p><h2 class="card-title">ต้นทุนต่อแก้ว</h2></div>
+          <div><p class="eyebrow">${icon('coin', 'ic-sm')} Cost per cup</p><h2 class="card-title">${t('cost.title')}</h2></div>
         </div>
         <div class="inputs-2">
-          <label class="field"><span class="label">ราคาเมล็ดต่อถุง</span><span class="unit-input"><input class="input" data-cost="price" inputmode="decimal"><span class="u">฿</span></span></label>
-          <label class="field"><span class="label">น้ำหนักถุง</span><span class="unit-input"><input class="input" data-cost="bag" inputmode="decimal"><span class="u">g</span></span></label>
-          <label class="field"><span class="label">กาแฟต่อแก้ว</span><span class="unit-input"><input class="input" data-cost="dose" inputmode="decimal"><span class="u">g</span></span></label>
-          <label class="field"><span class="label">นม / แก้ว / อื่นๆ</span><span class="unit-input"><input class="input" data-cost="extra" inputmode="decimal"><span class="u">฿</span></span></label>
+          <label class="field"><span class="label">${t('cost.price')}</span><span class="unit-input"><input class="input" data-cost="price" inputmode="decimal"><span class="u">${cur}</span></span></label>
+          <label class="field"><span class="label">${t('cost.bag')}</span><span class="unit-input"><input class="input" data-cost="bag" inputmode="decimal"><span class="u">g</span></span></label>
+          <label class="field"><span class="label">${t('cost.dose')}</span><span class="unit-input"><input class="input" data-cost="dose" inputmode="decimal"><span class="u">g</span></span></label>
+          <label class="field"><span class="label">${t('cost.extra')}</span><span class="unit-input"><input class="input" data-cost="extra" inputmode="decimal"><span class="u">${cur}</span></span></label>
         </div>
         <div class="row-between" style="align-items:flex-end">
-          <div><p class="label">ต่อแก้ว</p><p class="big-out num" style="margin-top:8px"><span id="costOut">0</span><small>฿</small></p></div>
+          <div><p class="label">${t('cost.per')}</p><p class="big-out num" style="margin-top:8px">${getLang() === 'th' ? '' : `<small style="margin:0 2px 0 0">${cur}</small>`}<span id="costOut">0</span>${getLang() === 'th' ? `<small>${cur}</small>` : ''}</p></div>
           <p class="muted caption" id="costCups" style="text-align:right"></p>
         </div>
-        <label class="field"><span class="label">เทียบกับร้านกาแฟแก้วละ</span><span class="unit-input"><input class="input" data-cost="cafe" inputmode="decimal"><span class="u">฿</span></span></label>
+        <label class="field"><span class="label">${t('cost.cafe')}</span><span class="unit-input"><input class="input" data-cost="cafe" inputmode="decimal"><span class="u">${cur}</span></span></label>
         <p class="verdict" id="costSave"></p>
       </article>
     </section>`;
@@ -202,7 +205,7 @@ export function render(root) {
     ey.dose.value = fmtNum(v.dose, 1);
     ey.bev.value = fmtNum(v.bev, 1);
     ey.tds.value = fmtNum(v.tds, 2);
-    $('#eyBevLbl', root).textContent = EY_MODES[st.eyMode].bevLabel;
+    $('#eyBevLbl', root).textContent = t(EY_MODES[st.eyMode].bevLabel);
     ey.chart.innerHTML = chartSvg(st.eyMode);
     $$('[data-ey]', ey.seg).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.ey === st.eyMode)));
     updateSeg(ey.seg);
@@ -224,16 +227,16 @@ export function render(root) {
     const eb = $('#eyBadge', root);
     const tb = $('#tdsBadge', root);
     eb.className = `badge ${eyOk ? 'good' : 'warn'}`;
-    eb.textContent = val < 18 ? 'สกัดน้อยไป' : val > 22 ? 'สกัดมากไป' : 'การสกัดพอดี';
+    eb.textContent = val < 18 ? t('ey.bUnder') : val > 22 ? t('ey.bOver') : t('ey.bGood');
     tb.className = `badge ${tdsOk ? 'good' : 'warn'}`;
-    tb.textContent = v.tds < lo ? 'อ่อนไป' : v.tds > hi ? 'เข้มไป' : 'ความเข้มพอดี';
+    tb.textContent = v.tds < lo ? t('ey.bWeak') : v.tds > hi ? t('ey.bStrong') : t('ey.bTdsOk');
     let txt = '';
-    if (val < 18) txt += '<b>สกัดน้อยไป</b> — มักเปรี้ยวแหลมและบาง ลองบดละเอียดขึ้น เพิ่มอุณหภูมิน้ำ หรือยืดเวลาชง ';
-    else if (val > 22) txt += '<b>สกัดมากไป</b> — มักขม ฝาด แห้งปลายลิ้น ลองบดหยาบขึ้น ลดอุณหภูมิ หรือลดเวลาชง ';
-    else txt += '<b>การสกัดอยู่ในช่วง 18–22%</b> ซึ่งเป็นช่วงที่รสชาติมักสมดุล ';
-    if (v.tds < lo) txt += `· ความเข้มต่ำกว่า ${lo}% ลองเพิ่มกาแฟ (ลดอัตราส่วน)`;
-    else if (v.tds > hi) txt += `· ความเข้มสูงกว่า ${hi}% ลองเพิ่มน้ำ (เพิ่มอัตราส่วน)`;
-    else txt += '· ความเข้มข้นอยู่ในช่วงแนะนำ';
+    if (val < 18) txt += t('ey.vUnder');
+    else if (val > 22) txt += t('ey.vOver');
+    else txt += t('ey.vOk');
+    if (v.tds < lo) txt += t('ey.tdsLow', { lo });
+    else if (v.tds > hi) txt += t('ey.tdsHigh', { hi });
+    else txt += t('ey.tdsOk');
     $('#eyVerdict', root).innerHTML = txt;
     save();
   }
@@ -280,18 +283,18 @@ export function render(root) {
     const days = Math.round((now - d) / 864e5);
     const label = $('#restLabel', root);
     if (!Number.isFinite(days)) {
-      label.textContent = 'เลือกวันที่คั่วจากถุงกาแฟ';
+      label.textContent = t('rest.pick');
       return;
     }
     if (days < 0) {
       springNumber($('#restDays', root), 0);
-      label.textContent = 'วันที่คั่วอยู่ในอนาคต — ลองตรวจสอบอีกครั้ง';
+      label.textContent = t('rest.future');
       springTo(rest.key, 0, (v) => { rest.marker.style.left = `${v}%`; }, { from: 0 });
       return;
     }
     springNumber($('#restDays', root), days);
     const ph = phases.find((p) => days < p.to) || phases[phases.length - 1];
-    label.textContent = ph.label;
+    label.textContent = L(ph.label);
     springTo(rest.key, (Math.min(days, 60) / 60) * 100, (v) => { rest.marker.style.left = `${v}%`; }, { stiffness: 140, damping: 16, from: 0 });
     save();
   }
@@ -319,7 +322,7 @@ export function render(root) {
     updateSeg(tempSeg);
     $('#tempOut', root).innerHTML = `${r.range[0]}–${r.range[1]}<small>°C</small>`;
     $('#tempF', root).textContent = `${cToF(r.range[0])}–${cToF(r.range[1])}°F`;
-    $('#tempNote', root).textContent = r.note;
+    $('#tempNote', root).textContent = L(r.note);
     thermo.style.left = `${((r.range[0] - 80) / 20) * 100}%`;
     thermo.style.width = `${((r.range[1] - r.range[0]) / 20) * 100}%`;
     save();
@@ -336,10 +339,10 @@ export function render(root) {
     const g = GRINDS.find((x) => x.id === st.grind);
     $$('[data-grind]', root).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.grind === st.grind)));
     $('#grindDetail', root).innerHTML = `
-      <div><span class="k">ระดับ</span><span class="v th">${esc(g.th)}</span></div>
-      <div><span class="k">ขนาดโดยประมาณ</span><span class="v num">${g.um[0]}–${g.um[1]} µm</span></div>
-      <div><span class="k">ผิวสัมผัสคล้าย</span><span class="v th">${esc(g.like)}</span></div>
-      <div><span class="k">เหมาะกับ</span><span class="v th">${esc(g.methods)}</span></div>`;
+      <div><span class="k">${t('grind.level')}</span><span class="v th">${esc(L(g.name))}</span></div>
+      <div><span class="k">${t('grind.size')}</span><span class="v num">${g.um[0]}–${g.um[1]} µm</span></div>
+      <div><span class="k">${t('grind.like')}</span><span class="v th">${esc(L(g.like))}</span></div>
+      <div><span class="k">${t('grind.for')}</span><span class="v th">${esc(L(g.methods))}</span></div>`;
     save();
   }
   $('.grind-scale', root).addEventListener('click', (e) => {
@@ -351,10 +354,10 @@ export function render(root) {
 
   /* ---------- converter ---------- */
   const CONV = [
-    { label: 'น้ำหนัก', a: 'g', b: 'oz', ab: (v) => v / 28.3495, ba: (v) => v * 28.3495, def: 15, d: [1, 2] },
-    { label: 'ปริมาตร', a: 'ml', b: 'fl oz', ab: (v) => v / 29.5735, ba: (v) => v * 29.5735, def: 250, d: [0, 2] },
-    { label: 'อุณหภูมิ', a: '°C', b: '°F', ab: (v) => (v * 9) / 5 + 32, ba: (v) => ((v - 32) * 5) / 9, def: 93, d: [1, 1], neg: true },
-    { label: 'ช้อนตวงกาแฟ (≈10 g)', a: 'ช้อน', b: 'g', ab: (v) => v * 10, ba: (v) => v / 10, def: 2, d: [1, 0] },
+    { label: t('conv.weight'), a: 'g', b: 'oz', ab: (v) => v / 28.3495, ba: (v) => v * 28.3495, def: 15, d: [1, 2] },
+    { label: t('conv.volume'), a: 'ml', b: 'fl oz', ab: (v) => v / 29.5735, ba: (v) => v * 29.5735, def: 250, d: [0, 2] },
+    { label: t('conv.temp'), a: '°C', b: '°F', ab: (v) => (v * 9) / 5 + 32, ba: (v) => ((v - 32) * 5) / 9, def: 93, d: [1, 1], neg: true },
+    { label: t('conv.scoop'), a: t('conv.scoopUnit'), b: 'g', ab: (v) => v * 10, ba: (v) => v / 10, def: 2, d: [1, 0] },
   ];
   const conv = $('#conv', root);
   conv.innerHTML = CONV.map((c, i) => `
@@ -386,26 +389,26 @@ export function render(root) {
   /* ---------- cost ---------- */
   const costInputs = $$('[data-cost]', root);
   costInputs.forEach((inp) => {
-    inp.value = fmtNum(st.cost[inp.dataset.cost], 1);
+    inp.value = fmtNum(cost[inp.dataset.cost], 1);
     inp.addEventListener('input', () => {
       const n = parseNum(inp.value);
       if (Number.isFinite(n) && n >= 0) {
-        st.cost[inp.dataset.cost] = n;
+        cost[inp.dataset.cost] = n;
         costCalc();
       }
     });
     inp.addEventListener('focus', () => inp.select());
   });
   function costCalc() {
-    const c = st.cost;
+    const c = cost;
     const per = c.bag > 0 ? (c.price / c.bag) * c.dose + c.extra : 0;
-    springNumber($('#costOut', root), per, (v) => fmtNum(v, 1));
+    springNumber($('#costOut', root), per, (v) => (getLang() === 'th' ? fmtNum(v, 1) : v.toFixed(2)));
     const cups = c.dose > 0 ? Math.floor(c.bag / c.dose) : 0;
-    $('#costCups', root).textContent = `ได้ประมาณ ${cups} แก้วต่อถุง`;
+    $('#costCups', root).textContent = t('cost.cups', { n: cups });
     const diff = c.cafe - per;
     $('#costSave', root).innerHTML = diff > 0
-      ? `ชงเองประหยัด <b>฿${fmtNum(diff, 1)}</b> ต่อแก้ว — ถ้าดื่มวันละแก้ว เดือนหนึ่งประหยัดได้ราว <b>฿${Math.round(diff * 30).toLocaleString('th-TH')}</b>`
-      : 'ต้นทุนชงเองสูงกว่าร้านที่เปรียบเทียบ — แต่ได้เลือกเมล็ดเองทุกแก้ว';
+      ? t('cost.save', { cur, diff: fmtNum(diff, getLang() === 'th' ? 1 : 2), month: Math.round(diff * 30).toLocaleString(locale()) })
+      : t('cost.noSave');
     save();
   }
 

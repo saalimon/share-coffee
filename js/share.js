@@ -5,6 +5,7 @@ import { icon } from './icons.js';
 import { openSheet, toast, methodOf, ratioText } from './ui.js';
 import { sanitizeRecipe } from './sanitize.js';
 import { burst } from './motion.js';
+import { t, langParam } from './i18n.js';
 
 /* ---------------- encode / decode ---------------- */
 
@@ -79,7 +80,8 @@ export async function decodeRecipe(payload) {
 }
 
 export async function recipeShareUrl(r) {
-  return `${baseUrl()}?r=${await encodeRecipe(r)}#/recipes`;
+  const lp = langParam();
+  return `${baseUrl()}?r=${await encodeRecipe(r)}${lp ? `&${lp}` : ''}#/recipes`;
 }
 
 /* ---------------- QR ---------------- */
@@ -148,27 +150,27 @@ export function openShareSheet({ title, url, text = '', preview = '' }) {
   const canNative = typeof navigator.share === 'function';
   const line = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}`;
   openSheet({
-    label: 'แชร์',
+    label: t('share.label'),
     html: `
       <div class="sheet-head">
-        <p class="eyebrow">${icon('share', 'ic-sm')} แชร์</p>
+        <p class="eyebrow">${icon('share', 'ic-sm')} ${t('share.label')}</p>
         <h2 class="d-md">${esc(title)}</h2>
       </div>
       ${preview}
       <div class="share-grid">
-        <div class="qr is-in" id="qrBox">${q ? q.svg : '<p class="caption" style="color:#000">QR ไม่พร้อมใช้งาน</p>'}</div>
+        <div class="qr is-in" id="qrBox">${q ? q.svg : `<p class="caption" style="color:#000">${t('share.qrNA')}</p>`}</div>
         <div class="stack">
-          <p class="muted">ส่งลิงก์นี้ให้เพื่อน เปิดแล้วจะเห็นสูตรเดียวกันทันที — ไม่ต้องสมัครสมาชิก หรือให้เพื่อนสแกน QR จากหน้าจอนี้</p>
+          <p class="muted">${t('share.help')}</p>
           <div class="link-field">
-            <input type="text" readonly value="${esc(url)}" aria-label="ลิงก์สำหรับแชร์" id="shareUrl">
+            <input type="text" readonly value="${esc(url)}" aria-label="${esc(t('share.linkAria'))}" id="shareUrl">
             <button class="btn btn-primary btn-sm" id="copyBtn" type="button">
-              <span class="copy-swap"><span class="idle row" style="gap:6px">${icon('copy', 'ic-sm')} คัดลอก</span><span class="done row" style="gap:6px">${icon('check', 'ic-sm')} แล้ว</span></span>
+              <span class="copy-swap"><span class="idle row" style="gap:6px">${icon('copy', 'ic-sm')} ${t('share.copy')}</span><span class="done row" style="gap:6px">${icon('check', 'ic-sm')} ${t('share.copied')}</span></span>
             </button>
           </div>
           <div class="share-actions">
-            ${canNative ? `<button class="btn btn-secondary btn-sm" id="nativeShare" type="button">${icon('share', 'ic-sm')} แชร์ผ่านแอป…</button>` : ''}
-            <a class="btn btn-secondary btn-sm" href="${esc(line)}" target="_blank" rel="noopener noreferrer"><span class="line-dot" aria-hidden="true"></span>ส่งทาง LINE</a>
-            ${q ? `<button class="btn btn-secondary btn-sm" id="dlQr" type="button">${icon('download', 'ic-sm')} บันทึก QR</button>` : ''}
+            ${canNative ? `<button class="btn btn-secondary btn-sm" id="nativeShare" type="button">${icon('share', 'ic-sm')} ${t('share.native')}</button>` : ''}
+            <a class="btn btn-secondary btn-sm" href="${esc(line)}" target="_blank" rel="noopener noreferrer"><span class="line-dot" aria-hidden="true"></span>${t('share.line')}</a>
+            ${q ? `<button class="btn btn-secondary btn-sm" id="dlQr" type="button">${icon('download', 'ic-sm')} ${t('share.saveQr')}</button>` : ''}
           </div>
         </div>
       </div>`,
@@ -184,7 +186,7 @@ export function openShareSheet({ title, url, text = '', preview = '' }) {
           setTimeout(() => btn.classList.remove('is-copied'), 1800);
         } else {
           input.focus();
-          toast('คัดลอกไม่สำเร็จ — กดค้างที่ลิงก์เพื่อคัดลอกเอง', { iconName: 'info' });
+          toast(t('share.copyFail'), { iconName: 'info' });
         }
       });
       sheet.querySelector('#nativeShare')?.addEventListener('click', async () => {
@@ -205,16 +207,17 @@ export async function shareRecipe(r) {
   openShareSheet({
     title: r.name,
     url,
-    text: `สูตรกาแฟ ${r.name} — ${fmtNum(r.dose, 1)} g : ${fmtNum(r.water, 1)} g (${ratioText(r)})`,
+    text: t('share.recipeText', { name: r.name, dose: fmtNum(r.dose, 1), water: fmtNum(r.water, 1), ratio: ratioText(r) }),
     preview: `<div class="preview-mini"><span class="micon">${icon(m.icon)}</span><div><b>${esc(r.name)}</b><span class="caption muted">${esc(m.name)} · ${fmtNum(r.dose, 1)} g · ${fmtNum(r.water, 1)} g · ${ratioText(r)}</span></div></div>`,
   });
 }
 
 export function shareApp() {
-  const url = baseUrl();
+  const lp = langParam();
+  const url = `${baseUrl()}${lp ? `?${lp}` : ''}`;
   openShareSheet({
-    title: 'ชวนเพื่อนมาชงกาแฟ',
+    title: t('share.appTitle'),
     url,
-    text: 'Share Coffee — คำนวณอัตราส่วน จับเวลา และแชร์สูตรกาแฟ',
+    text: t('share.appText'),
   });
 }

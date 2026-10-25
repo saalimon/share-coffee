@@ -8,6 +8,7 @@ const CORE = [
   'manifest.webmanifest',
   'vendor/qrcode.js',
   'js/main.js',
+  'js/i18n.js',
   'js/util.js',
   'js/icons.js',
   'js/data.js',

@@ -3,6 +3,7 @@
 import { esc, fmtNum, fmtTime, fmtDuration, $ } from './util.js';
 import { icon } from './icons.js';
 import { METHODS, CAT_LABEL, grindById, recipeRatio } from './data.js';
+import { t, L, getLang } from './i18n.js';
 import { dragToDismiss, reveal, magnetic } from './motion.js';
 
 /* ---------------- toast ---------------- */
@@ -26,7 +27,7 @@ export function toast(message, { iconName = 'check', ms = 2600 } = {}) {
 
 const openSheets = [];
 
-export function openSheet({ html, label = 'หน้าต่าง', wide = false, foot = '', onMount, onClose } = {}) {
+export function openSheet({ html, label = t('c.dialog'), wide = false, foot = '', onMount, onClose } = {}) {
   const root = document.getElementById('sheets');
   const layer = document.createElement('div');
   layer.className = 'sheet-layer';
@@ -35,7 +36,7 @@ export function openSheet({ html, label = 'หน้าต่าง', wide = fal
     <div class="sheet ${wide ? 'sheet-wide' : ''}" role="dialog" aria-modal="true" aria-label="${esc(label)}">
       <span class="sheet-grip" aria-hidden="true"></span>
       <span class="sheet-grip-zone" aria-hidden="true"></span>
-      <button class="btn-icon sheet-close" data-close aria-label="ปิด">${icon('close')}</button>
+      <button class="btn-icon sheet-close" data-close aria-label="${esc(t('c.close'))}">${icon('close')}</button>
       <div class="sheet-body">${html}</div>
       ${foot ? `<div class="sheet-foot">${foot}</div>` : ''}
     </div>`;
@@ -118,7 +119,10 @@ export const spotLayers = (scrim = false) =>
 
 /* ---------------- recipe fragments ---------------- */
 
-export const methodOf = (r) => METHODS[r.method] || METHODS.other;
+export const methodOf = (r) => {
+  const m = METHODS[r.method] || METHODS.other;
+  return { ...m, name: L(m.name) };
+};
 export const ratioText = (r) => `1:${fmtNum(recipeRatio(r), 1)}`;
 export const waterUnit = (r) => (r.yield ? 'g out' : 'g');
 
@@ -130,13 +134,13 @@ export const tagText = (m) => {
 export function recipeCard(r, { reveal: rv = true } = {}) {
   const m = methodOf(r);
   return `
-    <article class="rcard" data-tilt tabindex="0" role="button" data-recipe="${esc(r.id)}" ${rv ? 'data-reveal' : ''} aria-label="${esc(r.name)} โดย ${esc(r.author || 'ไม่ระบุ')}">
+    <article class="rcard" data-tilt tabindex="0" role="button" data-recipe="${esc(r.id)}" ${rv ? 'data-reveal' : ''} aria-label="${esc(t('c.by', { name: r.name, author: r.author || t('c.unknown') }))}">
       <div class="rcard-top">
         <span class="micon">${icon(m.icon)}</span>
         <span class="rcard-tag">${esc(tagText(m))}</span>
       </div>
       <h3 class="rcard-title">${esc(r.name)}</h3>
-      <p class="rcard-author">${esc(r.author || 'สูตรของฉัน')}</p>
+      <p class="rcard-author">${esc(r.author || t('c.mine'))}</p>
       <div class="rcard-stats">
         <span class="stat-chip"><b>${fmtNum(r.dose, 1)}</b>g</span>
         <span class="stat-chip"><b>${fmtNum(r.water, 1)}</b>${r.yield ? 'g out' : 'g'}</span>
@@ -150,16 +154,16 @@ export function recipeCard(r, { reveal: rv = true } = {}) {
 
 export function detailStats(r) {
   const g = grindById(r.grind);
-  const temp = r.temp == null ? 'น้ำเย็น' : `${fmtNum(r.temp, 0)}°C`;
+  const temp = r.temp == null ? t('c.coldWater') : `${fmtNum(r.temp, 0)}°C`;
   return `
     <div class="detail-stats">
-      <div><span class="k">กาแฟ</span><span class="v">${fmtNum(r.dose, 1)} <small>g</small></span></div>
-      <div><span class="k">${r.yield ? 'Yield (น้ำกาแฟที่ได้)' : 'น้ำ'}</span><span class="v">${fmtNum(r.water, 1)} <small>g</small></span></div>
-      <div><span class="k">อัตราส่วน</span><span class="v">${ratioText(r)}</span></div>
-      <div><span class="k">อุณหภูมิน้ำ</span><span class="v">${temp}</span></div>
-      <div><span class="k">ระดับบด</span><span class="v">${esc(g.th)} <small>${esc(g.en)}</small></span></div>
-      <div><span class="k">เวลารวม</span><span class="v">${fmtDuration(r.time)}</span></div>
-      ${r.ice ? `<div><span class="k">น้ำแข็ง</span><span class="v">${fmtNum(r.ice, 0)} <small>g</small></span></div>` : ''}
+      <div><span class="k">${t('c.coffee')}</span><span class="v">${fmtNum(r.dose, 1)} <small>g</small></span></div>
+      <div><span class="k">${r.yield ? t('c.yieldLong') : t('c.water')}</span><span class="v">${fmtNum(r.water, 1)} <small>g</small></span></div>
+      <div><span class="k">${t('c.ratio')}</span><span class="v">${ratioText(r)}</span></div>
+      <div><span class="k">${t('c.waterTemp')}</span><span class="v">${temp}</span></div>
+      <div><span class="k">${t('c.grind')}</span><span class="v">${esc(L(g.name))}${getLang() === 'th' ? ` <small>${esc(g.en)}</small>` : ''}</span></div>
+      <div><span class="k">${t('c.totalTime')}</span><span class="v">${fmtDuration(r.time)}</span></div>
+      ${r.ice ? `<div><span class="k">${t('c.ice')}</span><span class="v">${fmtNum(r.ice, 0)} <small>g</small></span></div>` : ''}
     </div>`;
 }
 
@@ -186,13 +190,13 @@ export function stepsList(r, { live = false } = {}) {
   return `<ol class="steps ${live ? '' : 'is-static'}" ${live ? 'id="tSteps"' : ''}>${items}
     <li class="step" data-i="end">
       <span class="step-time num">${fmtTime(r.time)}</span>
-      <div class="step-body"><b>เสร็จ</b><p>${r.yield ? 'หยุดชอตแล้วเสิร์ฟ' : 'เสิร์ฟได้เลย'}</p></div>
+      <div class="step-body"><b>${t('c.done')}</b><p>${r.yield ? t('c.serveShot') : t('c.serve')}</p></div>
       <span class="step-water"></span>
     </li></ol>`;
 }
 
 export function chipBar(items, current, attr = 'data-v') {
   return items
-    .map((it) => `<button type="button" ${attr}="${esc(it.id)}" aria-pressed="${it.id === current}">${esc(it.label)}</button>`)
+    .map((it) => `<button type="button" ${attr}="${esc(it.id)}" aria-pressed="${it.id === current}">${esc(L(it.label))}</button>`)
     .join('');
 }

@@ -2,7 +2,8 @@
 
 import { $, $$, esc } from '../util.js';
 import { icon } from '../icons.js';
-import { RECIPES, CATS, METHODS } from '../data.js';
+import { standardRecipes, CATS, METHODS } from '../data.js';
+import { t, L } from '../i18n.js';
 import { recipeCard, spotLayers } from '../ui.js';
 import { getMine, getRecipe } from '../store.js';
 import { openRecipeSheet, openEditor } from '../recipe-sheet.js';
@@ -13,14 +14,14 @@ export function render(root, query) {
 
   root.innerHTML = `
     <section class="page-head wrap">
-      <p class="eyebrow" data-reveal><span class="dot"></span>Recipes · สูตรมาตรฐาน</p>
+      <p class="eyebrow" data-reveal><span class="dot"></span>${t('rec.eyebrow')}</p>
       <h1 class="d-xl split">Recipes worth<br>repeating.</h1>
-      <p class="lead muted" data-reveal>สูตรจากแชมป์โลกและบาริสต้าชื่อดัง พร้อมขั้นตอนจับเวลาทุกจังหวะการเท — หรือสร้างสูตรของคุณเอง แล้วแชร์ให้เพื่อนด้วยลิงก์เดียว</p>
+      <p class="lead muted" data-reveal>${t('rec.lead')}</p>
     </section>
     <section class="wrap">
-      <div class="seg seg-scroll filters" id="catSeg" role="group" aria-label="กรองตามประเภท" data-reveal>
+      <div class="seg seg-scroll filters" id="catSeg" role="group" aria-label="${t('rec.filter')}" data-reveal>
         <span class="seg-ind" aria-hidden="true"></span>
-        ${CATS.map((c) => `<button type="button" data-cat="${c.id}" aria-pressed="${c.id === cat}">${esc(c.label)}</button>`).join('')}
+        ${CATS.map((c) => `<button type="button" data-cat="${c.id}" aria-pressed="${c.id === cat}">${esc(L(c.label))}</button>`).join('')}
       </div>
       <div class="recipe-grid" id="grid" data-stagger></div>
     </section>`;
@@ -30,6 +31,7 @@ export function render(root, query) {
 
   function draw() {
     const mine = getMine();
+    const RECIPES = standardRecipes();
     let list;
     if (cat === 'mine') list = mine;
     else if (cat === 'all') list = [...mine, ...RECIPES];
@@ -39,17 +41,17 @@ export function render(root, query) {
       <article class="spot spot-berry rcard-new" data-reveal>
         ${spotLayers()}
         <div class="stack" style="gap:12px">
-          <p class="eyebrow">${icon('sparkle', 'ic-sm')} สูตรของคุณเอง</p>
+          <p class="eyebrow">${icon('sparkle', 'ic-sm')} ${t('rec.ownEyebrow')}</p>
           <h3>Make it<br>yours.</h3>
-          <p>สร้างสูตรพร้อมขั้นตอนการเท บันทึกไว้ในเครื่อง แล้วส่งลิงก์ให้เพื่อนเปิดได้ทันที</p>
+          <p>${t('rec.ownText')}</p>
         </div>
-        <button class="btn btn-primary magnetic" type="button" id="newRecipe" style="justify-self:start;align-self:flex-start">${icon('plus', 'ic-sm')} สร้างสูตรใหม่</button>
+        <button class="btn btn-primary magnetic" type="button" id="newRecipe" style="justify-self:start;align-self:flex-start">${icon('plus', 'ic-sm')} ${t('rec.new')}</button>
       </article>`;
 
     let html = '';
     if (cat === 'all' || cat === 'mine') html += create;
     if (!list.length && cat === 'mine') {
-      html += `<div class="empty" data-reveal>${icon('book', 'ic-lg')}<p>ยังไม่มีสูตรของคุณ<br><span class="caption">สร้างใหม่ หรือกด “ทำสำเนาไปปรับ” จากสูตรมาตรฐาน</span></p></div>`;
+      html += `<div class="empty" data-reveal>${icon('book', 'ic-lg')}<p>${t('rec.empty')}<br><span class="caption">${t('rec.emptySub')}</span></p></div>`;
     }
     html += list.map((r) => recipeCard(r)).join('');
     grid.innerHTML = html;

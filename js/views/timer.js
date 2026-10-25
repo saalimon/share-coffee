@@ -2,7 +2,8 @@
 
 import { $, $$, esc, fmtNum, fmtTime, clamp, parseNum, store, holdRepeat, go, haptic, finePointer } from '../util.js';
 import { icon } from '../icons.js';
-import { RECIPES, scaleRecipe, grindById, recipeRatio } from '../data.js';
+import { standardRecipes, scaleRecipe, grindName, recipeRatio } from '../data.js';
+import { t } from '../i18n.js';
 import { springTo, burst, reducedMotion } from '../motion.js';
 import { stepsList, methodOf, openSheet, toast, hasOpenSheet } from '../ui.js';
 import { getRecipe, getMine } from '../store.js';
@@ -32,7 +33,7 @@ export function render(root, query) {
 
   root.innerHTML = `
     <section class="page-head tight wrap" style="padding-bottom:28px">
-      <p class="eyebrow" data-reveal><span class="dot"></span>Brew timer · จับเวลาชง</p>
+      <p class="eyebrow" data-reveal><span class="dot"></span>${t('timer.eyebrow')}</p>
       <h1 class="d-xl split">Pour with<br>purpose.</h1>
     </section>
     <section class="wrap timer-grid">
@@ -60,32 +61,32 @@ export function render(root, query) {
             <g id="ticks"></g>
           </svg>
           <div class="ring-center">
-            <div class="ring-step" id="tStep">พร้อมแล้ว — กดเริ่ม</div>
+            <div class="ring-step" id="tStep">${t('timer.ready')}</div>
             <div class="ring-time num" id="tTime" role="timer" aria-live="off">0:00</div>
-            <div class="ring-target" id="tTarget"><span>บนตาชั่ง</span><b class="num" id="tScale">0 g</b></div>
+            <div class="ring-target" id="tTarget"><span>${t('timer.onScale')}</span><b class="num" id="tScale">0 g</b></div>
             <div class="ring-next caption" id="tNext"></div>
           </div>
           <div class="countdown" id="tCount" aria-live="assertive"></div>
         </div>
         <div class="timer-controls">
-          <button class="btn-icon lg" type="button" id="tReset" aria-label="รีเซ็ต (R)">${icon('reset')}</button>
-          <button class="play-btn" type="button" id="tPlay" aria-label="เริ่มจับเวลา (Space)"><span class="pp" aria-hidden="true"><i></i><i></i></span></button>
-          <button class="btn-icon lg" type="button" id="tSkip" aria-label="${free ? 'บันทึกรอบ (N)' : 'ข้ามไปขั้นถัดไป (N)'}">${icon(free ? 'flag' : 'skip')}</button>
+          <button class="btn-icon lg" type="button" id="tReset" aria-label="${t('timer.resetAria')}">${icon('reset')}</button>
+          <button class="play-btn" type="button" id="tPlay" aria-label="${t('timer.startAria')}"><span class="pp" aria-hidden="true"><i></i><i></i></span></button>
+          <button class="btn-icon lg" type="button" id="tSkip" aria-label="${free ? t('timer.lapAria') : t('timer.skipAria')}">${icon(free ? 'flag' : 'skip')}</button>
         </div>
         <div class="timer-toggles">
-          <button class="pill-toggle" type="button" data-pref="sound" aria-pressed="${prefs.sound}">${icon('sound', 'ic-sm')} เสียง <span class="sw"></span></button>
-          ${canVibrate ? `<button class="pill-toggle" type="button" data-pref="vibrate" aria-pressed="${prefs.vibrate}">${icon('vibrate', 'ic-sm')} สั่น <span class="sw"></span></button>` : ''}
-          ${free ? '' : `<button class="pill-toggle" type="button" data-pref="countdown" aria-pressed="${prefs.countdown}">${icon('count', 'ic-sm')} นับถอยหลัง 3 วิ <span class="sw"></span></button>`}
+          <button class="pill-toggle" type="button" data-pref="sound" aria-pressed="${prefs.sound}">${icon('sound', 'ic-sm')} ${t('timer.sound')} <span class="sw"></span></button>
+          ${canVibrate ? `<button class="pill-toggle" type="button" data-pref="vibrate" aria-pressed="${prefs.vibrate}">${icon('vibrate', 'ic-sm')} ${t('timer.vibrate')} <span class="sw"></span></button>` : ''}
+          ${free ? '' : `<button class="pill-toggle" type="button" data-pref="countdown" aria-pressed="${prefs.countdown}">${icon('count', 'ic-sm')} ${t('timer.countdown')} <span class="sw"></span></button>`}
         </div>
-        ${finePointer() ? '<div class="hint-keys"><span><span class="kbd">Space</span> เริ่ม/หยุด</span><span><span class="kbd">N</span> ' + (free ? 'บันทึกรอบ' : 'ขั้นถัดไป') + '</span><span><span class="kbd">R</span> รีเซ็ต</span></div>' : ''}
+        ${finePointer() ? `<div class="hint-keys"><span><span class="kbd">Space</span> ${t('timer.kStart')}</span><span><span class="kbd">N</span> ${free ? t('timer.kLap') : t('timer.kNext')}</span><span><span class="kbd">R</span> ${t('timer.kReset')}</span></div>` : ''}
       </div>
 
-      <button class="picker" type="button" id="tPick" data-reveal aria-label="เปลี่ยนสูตร">
+      <button class="picker" type="button" id="tPick" data-reveal aria-label="${t('timer.pickAria')}">
           <span class="micon">${icon(m.icon)}</span>
           <span class="picker-text">
-            <span>${esc(m.name)} · แตะเพื่อเปลี่ยนสูตร</span>
-            <b>${esc(r ? r.name : 'จับเวลาอิสระ')}</b>
-            <span>${esc(r ? r.author || 'สูตรของฉัน' : 'ไม่มีขั้นตอน — กดธงเพื่อบันทึกรอบ')}</span>
+            <span>${esc(m.name)} · ${t('timer.tapChange')}</span>
+            <b>${esc(r ? r.name : t('timer.free'))}</b>
+            <span>${esc(r ? r.author || t('c.mine') : t('timer.freeSub'))}</span>
           </span>
           ${icon('chevron')}
         </button>
@@ -93,21 +94,21 @@ export function render(root, query) {
         ${r ? `
         <div class="card dose-card" data-reveal>
           <div class="row-between">
-            <span class="label">ปรับปริมาณกาแฟ — ขั้นตอนจะปรับตาม</span>
-            <button class="btn-icon" type="button" id="tShare" aria-label="แชร์สูตรนี้">${icon('share', 'ic-sm')}</button>
+            <span class="label">${t('timer.doseLabel')}</span>
+            <button class="btn-icon" type="button" id="tShare" aria-label="${t('timer.shareAria')}">${icon('share', 'ic-sm')}</button>
           </div>
           <div class="stepper stepper-sm">
-            <button type="button" id="dDown" aria-label="ลดกาแฟ">${icon('minus', 'ic-sm')}</button>
-            <input class="num" id="dIn" inputmode="decimal" aria-label="ปริมาณกาแฟ (กรัม)">
-            <span class="unit">g กาแฟ</span>
-            <button type="button" id="dUp" aria-label="เพิ่มกาแฟ">${icon('plus', 'ic-sm')}</button>
+            <button type="button" id="dDown" aria-label="${t('calc.lessCoffee')}">${icon('minus', 'ic-sm')}</button>
+            <input class="num" id="dIn" inputmode="decimal" aria-label="${t('timer.doseAria')}">
+            <span class="unit">${t('timer.doseUnit')}</span>
+            <button type="button" id="dUp" aria-label="${t('calc.moreCoffee')}">${icon('plus', 'ic-sm')}</button>
           </div>
           <div class="mini-stats" id="tStats"></div>
         </div>
         <div data-reveal id="stepsWrap"></div>` : `
         <div class="card" data-reveal>
-          <p class="label" style="margin-bottom:10px">รอบที่บันทึก</p>
-          <div class="laps" id="laps"><p class="muted caption">ยังไม่มีรอบ — ระหว่างจับเวลากดปุ่มธงเพื่อบันทึกเวลาแต่ละการเท</p></div>
+          <p class="label" style="margin-bottom:10px">${t('timer.laps')}</p>
+          <div class="laps" id="laps"><p class="muted caption">${t('timer.noLaps')}</p></div>
         </div>`}
       </div>
     </section>`;
@@ -172,12 +173,12 @@ export function render(root, query) {
     if (!r) return;
     derive();
     el.dIn.value = fmtNum(dose, 1);
-    const g = grindById(r.grind);
+    const g = grindName(r.grind);
     el.stats.innerHTML = `
-      <div><span class="k">${r.yield ? 'Yield' : 'น้ำ'}</span><span class="v">${fmtNum(r.water, 1)}g</span></div>
-      <div><span class="k">อัตราส่วน</span><span class="v">1:${fmtNum(recipeRatio(r), 1)}</span></div>
-      <div><span class="k">อุณหภูมิ</span><span class="v">${r.temp == null ? 'เย็น' : `${fmtNum(r.temp, 0)}°`}</span></div>
-      <div><span class="k">บด</span><span class="v" style="font-family:var(--f-body);font-size:13px;letter-spacing:0">${esc(g.th)}</span></div>`;
+      <div><span class="k">${r.yield ? t('c.yield') : t('c.water')}</span><span class="v">${fmtNum(r.water, 1)}g</span></div>
+      <div><span class="k">${t('c.ratio')}</span><span class="v">1:${fmtNum(recipeRatio(r), 1)}</span></div>
+      <div><span class="k">${t('c.temp')}</span><span class="v">${r.temp == null ? t('c.cold') : `${fmtNum(r.temp, 0)}°`}</span></div>
+      <div><span class="k">${t('c.grind')}</span><span class="v" style="font-family:var(--f-body);font-size:13px;letter-spacing:0">${esc(g)}</span></div>`;
     el.stepsWrap.innerHTML = stepsList(r, { live: true });
     // ticks on the ring
     el.ticks.innerHTML = derived
@@ -280,9 +281,9 @@ export function render(root, query) {
     el.prog.classList.toggle('is-zero', p <= 0.0005);
 
     if (free) {
-      el.step.textContent = started() ? (T.running ? 'กำลังจับเวลา' : 'หยุดชั่วคราว') : 'จับเวลาอิสระ — กดเริ่ม';
+      el.step.textContent = started() ? (T.running ? t('timer.running') : t('timer.paused')) : t('timer.freeReady');
       el.target.hidden = true;
-      el.next.textContent = T.laps.length ? `${T.laps.length} รอบ · ล่าสุด ${fmtTime(T.laps[T.laps.length - 1])}` : '';
+      el.next.textContent = T.laps.length ? t('timer.lapSummary', { n: T.laps.length, t: fmtTime(T.laps[T.laps.length - 1]) }) : '';
       setLevel(started() ? p : 0);
     } else {
       const s0 = started();
@@ -294,16 +295,16 @@ export function render(root, query) {
       setLevel(maxW > 0 ? w / maxW : p);
       const cur = i >= 0 ? derived[i] : null;
       if (T.done) {
-        el.step.textContent = 'ชงเสร็จแล้ว ☕';
-        el.next.textContent = 'กดเริ่มเพื่อชงอีกแก้ว';
+        el.step.textContent = t('timer.complete');
+        el.next.textContent = t('timer.again');
       } else if (!s0) {
-        el.step.textContent = 'พร้อมแล้ว — กดเริ่ม';
-        el.next.textContent = `ขั้นแรก: ${derived[0]?.label ?? ''}`;
+        el.step.textContent = t('timer.ready');
+        el.next.textContent = t('timer.first', { label: derived[0]?.label ?? '' });
       } else {
-        el.step.textContent = cur ? (cur.target > cur.prev ? `${cur.label} · เทถึง ${fmtNum(cur.target, 1)} g` : cur.label) : '';
+        el.step.textContent = cur ? (cur.target > cur.prev ? t('timer.pourTo', { label: cur.label, g: fmtNum(cur.target, 1) }) : cur.label) : '';
         const nx = derived[i + 1];
-        el.next.textContent = nx ? `ถัดไป: ${nx.label} ใน ${fmtTime(nx.t - e + 0.999)}` : `เสร็จใน ${fmtTime(r.time - e + 0.999)}`;
-        if (!T.running) el.next.textContent = `หยุดชั่วคราว · ${el.next.textContent}`;
+        el.next.textContent = nx ? t('timer.nextIn', { label: nx.label, t: fmtTime(nx.t - e + 0.999) }) : t('timer.doneIn', { t: fmtTime(r.time - e + 0.999) });
+        if (!T.running) el.next.textContent = t('timer.pausedPrefix', { text: el.next.textContent });
       }
       if (cur) {
         const bar = $(`.step[data-i="${i}"] .step-bar i`, root);
@@ -374,7 +375,7 @@ export function render(root, query) {
     T.running = true;
     T.startPerf = performance.now();
     el.play.classList.add('is-playing');
-    el.play.setAttribute('aria-label', 'หยุดชั่วคราว (Space)');
+    el.play.setAttribute('aria-label', t('timer.pauseAria'));
     el.dIn && (el.dIn.disabled = true);
     wake();
     clearInterval(T.iv);
@@ -393,7 +394,7 @@ export function render(root, query) {
     clearInterval(T.iv);
     cancelAnimationFrame(T.raf);
     el.play.classList.remove('is-playing');
-    el.play.setAttribute('aria-label', 'เริ่มจับเวลาต่อ (Space)');
+    el.play.setAttribute('aria-label', t('timer.resumeAria'));
     unwake();
     frame();
   }
@@ -408,7 +409,7 @@ export function render(root, query) {
     T.lastTick = '';
     T.laps = [];
     el.play.classList.remove('is-playing');
-    el.play.setAttribute('aria-label', 'เริ่มจับเวลา (Space)');
+    el.play.setAttribute('aria-label', t('timer.startAria'));
     if (el.dIn) el.dIn.disabled = false;
     unwake();
     renderLaps();
@@ -424,7 +425,7 @@ export function render(root, query) {
     clearInterval(T.iv);
     cancelAnimationFrame(T.raf);
     el.play.classList.remove('is-playing');
-    el.play.setAttribute('aria-label', 'ชงอีกครั้ง (Space)');
+    el.play.setAttribute('aria-label', t('timer.againAria'));
     if (el.dIn) el.dIn.disabled = false;
     unwake();
     T.idx = -2;
@@ -433,7 +434,7 @@ export function render(root, query) {
     buzz([120, 80, 120, 80, 240]);
     const b = el.play.getBoundingClientRect();
     burst(b.left + b.width / 2, b.top + b.height / 2, { count: 28 });
-    toast('ชงเสร็จแล้ว — ดื่มให้อร่อย!', { iconName: 'cup' });
+    toast(t('timer.finished'), { iconName: 'cup' });
   }
 
   function toggle() {
@@ -451,7 +452,7 @@ export function render(root, query) {
       return;
     }
     if (!started()) {
-      toast('กดเริ่มก่อน แล้วค่อยข้ามขั้น', { iconName: 'info' });
+      toast(t('timer.startFirst'), { iconName: 'info' });
       return;
     }
     if (T.done) return;
@@ -477,11 +478,11 @@ export function render(root, query) {
   function renderLaps() {
     if (!el.laps) return;
     if (!T.laps.length) {
-      el.laps.innerHTML = '<p class="muted caption">ยังไม่มีรอบ — ระหว่างจับเวลากดปุ่มธงเพื่อบันทึกเวลาแต่ละการเท</p>';
+      el.laps.innerHTML = `<p class="muted caption">${t('timer.noLaps')}</p>`;
       return;
     }
     el.laps.innerHTML = T.laps
-      .map((t, i) => `<div class="lap"><span>รอบ ${i + 1}</span><span>+${fmtTime(t - (T.laps[i - 1] || 0))}</span><b>${fmtTime(t)}</b></div>`)
+      .map((lt, i) => `<div class="lap"><span>${t('timer.lap', { n: i + 1 })}</span><span>+${fmtTime(lt - (T.laps[i - 1] || 0))}</span><b>${fmtTime(lt)}</b></div>`)
       .reverse()
       .join('');
   }
@@ -508,7 +509,7 @@ export function render(root, query) {
   if (r) {
     const setDose = (v) => {
       if (started()) {
-        toast('รีเซ็ตก่อน แล้วค่อยปรับปริมาณ', { iconName: 'info' });
+        toast(t('timer.resetFirst'), { iconName: 'info' });
         el.dIn.value = fmtNum(dose, 1);
         return;
       }
@@ -539,14 +540,14 @@ export function render(root, query) {
       </button>`;
     };
     openSheet({
-      label: 'เลือกสูตร',
+      label: t('timer.pickTitle'),
       html: `
-        <div class="sheet-head"><p class="eyebrow">${icon('book', 'ic-sm')} เลือกสูตร</p><h2 class="d-md">What are we brewing?</h2></div>
+        <div class="sheet-head"><p class="eyebrow">${icon('book', 'ic-sm')} ${t('timer.pickTitle')}</p><h2 class="d-md">What are we brewing?</h2></div>
         <div class="list-pick">
-          <button type="button" data-pick="free" aria-current="${free}"><span class="micon">${icon('timer')}</span><span><b>จับเวลาอิสระ</b><span class="muted">นาฬิกาจับเวลาพร้อมบันทึกรอบ</span></span></button>
-          ${mine.length ? `<p class="list-group-title">สูตรของฉัน</p>${mine.map(row).join('')}` : ''}
-          <p class="list-group-title">สูตรมาตรฐาน</p>
-          ${RECIPES.map(row).join('')}
+          <button type="button" data-pick="free" aria-current="${free}"><span class="micon">${icon('timer')}</span><span><b>${t('timer.free')}</b><span class="muted">${t('timer.freeDesc')}</span></span></button>
+          ${mine.length ? `<p class="list-group-title">${t('timer.mine')}</p>${mine.map(row).join('')}` : ''}
+          <p class="list-group-title">${t('timer.standard')}</p>
+          ${standardRecipes().map(row).join('')}
         </div>`,
       onMount(el2, api) {
         el2.addEventListener('click', (e) => {

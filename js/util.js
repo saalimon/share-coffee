@@ -1,5 +1,7 @@
 // Small shared helpers
 
+import { t } from './i18n.js';
+
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
@@ -28,11 +30,11 @@ export function fmtTime(sec, { showHours = false } = {}) {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-/** Human friendly duration: 3:30 / 12 ชม. */
+/** Human friendly duration: 3:30 / 12 h */
 export function fmtDuration(sec) {
   if (sec >= 3600) {
     const h = sec / 3600;
-    return `${fmtNum(h, 1)} ชม.`;
+    return `${fmtNum(h, 1)} ${t('c.hours')}`;
   }
   return fmtTime(sec);
 }

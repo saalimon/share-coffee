@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="th">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Share Coffee — คำนวณอัตราส่วน จับเวลา และแชร์สูตรกาแฟ</title>
-  <meta name="description" content="แอปชงกาแฟ: คำนวณอัตราส่วนกาแฟต่อน้ำ จับเวลาแบบนำทางทุกจังหวะการเท สูตรมาตรฐานจากแชมป์โลก และแชร์สูตรให้เพื่อนด้วยลิงก์เดียว">
+  <title>Share Coffee — Brew by the numbers</title>
+  <meta name="description" content="A coffee brewing app: coffee-to-water ratio calculator, guided pour-by-pour brew timer, classic recipes from world champions, and recipes you can share with a single link. English / ภาษาไทย.">
   <meta name="theme-color" content="#090909">
   <meta name="color-scheme" content="dark">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,7 +14,7 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Share Coffee">
   <meta property="og:title" content="Share Coffee — Brew by the numbers.">
-  <meta property="og:description" content="คำนวณอัตราส่วน จับเวลาชง และแชร์สูตรกาแฟให้เพื่อนด้วยลิงก์เดียว">
+  <meta property="og:description" content="Ratio calculator, guided brew timer and coffee recipes you can share with a single link.">
   <meta property="og:url" content="https://saalimon.github.io/share-coffee/">
   <meta property="og:image" content="https://saalimon.github.io/share-coffee/assets/og.png">
   <meta property="og:image:width" content="1200">
@@ -25,17 +25,16 @@
   <link rel="apple-touch-icon" href="assets/icon-180.png">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="preload" href="assets/fonts/mona-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="assets/fonts/anuphan-thai-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/styles.css">
   <script src="vendor/qrcode.js" defer></script>
   <script type="module" src="js/main.js"></script>
 </head>
 <body>
-  <a class="skip" href="#main">ข้ามไปเนื้อหา</a>
+  <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
 
   <header class="nav" id="nav">
     <div class="nav-in wrap">
-      <a class="brand" href="#/calc" aria-label="Share Coffee หน้าแรก">
+      <a class="brand" href="#/calc" aria-label="Share Coffee home" data-i18n-aria="nav.home">
         <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
           <g transform="rotate(35 12 12)">
             <ellipse class="draw" pathLength="1" cx="12" cy="12" rx="6.5" ry="9"/>
@@ -44,17 +43,22 @@
         </svg>
         <span>share<span class="brand-dim">/</span>coffee</span>
       </a>
-      <nav class="seg nav-tabs" aria-label="เมนูหลัก">
+      <nav class="seg nav-tabs" aria-label="Main menu" data-i18n-aria="nav.menu">
         <span class="seg-ind" aria-hidden="true"></span>
-        <a href="#/calc" data-route="calc">คำนวณ</a>
-        <a href="#/timer" data-route="timer">จับเวลา</a>
-        <a href="#/recipes" data-route="recipes">สูตร</a>
-        <a href="#/tools" data-route="tools">เครื่องมือ</a>
+        <a href="#/calc" data-route="calc" data-i18n="nav.calc">Ratio</a>
+        <a href="#/timer" data-route="timer" data-i18n="nav.timer">Timer</a>
+        <a href="#/recipes" data-route="recipes" data-i18n="nav.recipes">Recipes</a>
+        <a href="#/tools" data-route="tools" data-i18n="nav.tools">Tools</a>
       </nav>
       <div class="nav-actions">
-        <button class="btn btn-primary btn-sm magnetic" type="button" id="shareApp" aria-label="แชร์แอปให้เพื่อน">
+        <div class="seg seg-sm lang-seg" role="group" aria-label="Language" data-i18n-aria="nav.lang">
+          <span class="seg-ind" aria-hidden="true"></span>
+          <button type="button" data-lang="en" lang="en" aria-pressed="true">EN</button>
+          <button type="button" data-lang="th" lang="th" aria-pressed="false">TH</button>
+        </div>
+        <button class="btn btn-primary btn-sm magnetic" type="button" id="shareApp" aria-label="Share the app with a friend" data-i18n-aria="nav.shareAria">
           <svg class="ic ic-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3.5M7.5 8 12 3.5 16.5 8M5 12.5V19a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6.5"/></svg>
-          <span class="nav-share-label">แชร์แอป</span>
+          <span class="nav-share-label" data-i18n="nav.share">Share app</span>
         </button>
       </div>
     </div>
@@ -63,7 +67,7 @@
   <main id="main" tabindex="-1">
     <div id="view" class="view"></div>
     <noscript>
-      <section class="wrap page-head"><h1 class="d-lg">Turn on JavaScript.</h1><p class="lead muted">แอปนี้ต้องใช้ JavaScript เพื่อคำนวณและจับเวลา</p></section>
+      <section class="wrap page-head"><h1 class="d-lg">Turn on JavaScript.</h1><p class="lead muted">This app needs JavaScript to calculate and time your brew. · แอปนี้ต้องใช้ JavaScript</p></section>
     </noscript>
   </main>
 
@@ -71,20 +75,20 @@
     <div class="wrap footer-in">
       <div class="stack" style="gap:14px">
         <a class="brand" href="#/calc"><span>share<span class="brand-dim">/</span>coffee</span></a>
-        <p>เครื่องมือชงกาแฟฟรีสำหรับทุกคน คำนวณ จับเวลา และแชร์สูตรได้โดยไม่ต้องสมัครสมาชิก ข้อมูลของคุณเก็บไว้ในเครื่องเท่านั้น</p>
+        <p data-i18n="footer.about">A free brewing toolkit for everyone.</p>
       </div>
       <div class="footer-cols">
         <div>
-          <h4>แอป</h4>
+          <h4 data-i18n="footer.app">App</h4>
           <ul>
-            <li><a href="#/calc">คำนวณอัตราส่วน</a></li>
-            <li><a href="#/timer">จับเวลาชง</a></li>
-            <li><a href="#/recipes">สูตรมาตรฐาน</a></li>
-            <li><a href="#/tools">เครื่องมือ</a></li>
+            <li><a href="#/calc" data-i18n="footer.calc">Ratio calculator</a></li>
+            <li><a href="#/timer" data-i18n="footer.timer">Brew timer</a></li>
+            <li><a href="#/recipes" data-i18n="footer.recipes">Standard recipes</a></li>
+            <li><a href="#/tools" data-i18n="footer.tools">Tools</a></li>
           </ul>
         </div>
         <div>
-          <h4>อ้างอิงสูตร</h4>
+          <h4 data-i18n="footer.refs">Recipe sources</h4>
           <ul>
             <li>James Hoffmann</li>
             <li>Tetsu Kasuya (4:6)</li>
@@ -93,27 +97,27 @@
           </ul>
         </div>
         <div>
-          <h4>โปรเจกต์</h4>
+          <h4 data-i18n="footer.project">Project</h4>
           <ul>
             <li><a class="link" href="https://github.com/saalimon/share-coffee" target="_blank" rel="noopener">GitHub</a></li>
-            <li><a href="#/recipes?c=mine">สูตรของฉัน</a></li>
+            <li><a href="#/recipes?c=mine" data-i18n="footer.mine">My recipes</a></li>
           </ul>
         </div>
       </div>
       <div class="footer-note">
-        <span>ตัวเลขทุกสูตรเป็นจุดเริ่มต้น — ปรับตามเมล็ด เครื่องบด และรสนิยมของคุณ</span>
-        <span>ใช้งานแบบออฟไลน์ได้ · ติดตั้งเป็นแอปบนมือถือได้</span>
+        <span data-i18n="footer.note1"></span>
+        <span data-i18n="footer.note2"></span>
       </div>
     </div>
   </footer>
 
-  <nav class="tabbar" aria-label="เมนูหลัก (มือถือ)">
+  <nav class="tabbar" aria-label="Main menu" data-i18n-aria="nav.menu">
     <div class="seg">
       <span class="seg-ind" aria-hidden="true"></span>
-      <a href="#/calc" data-route="calc"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="7" r="2.6"/><circle cx="17" cy="17" r="2.6"/><path d="M19 5 5 19"/></svg><span>คำนวณ</span></a>
-      <a href="#/timer" data-route="timer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 9.5v4l2.6 2.2M9.5 2.5h5M12 2.5V6M18.5 6.5l1.5-1.5"/></svg><span>จับเวลา</span></a>
-      <a href="#/recipes" data-route="recipes"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.2A2.2 2.2 0 0 1 7.2 3H19v14.5H7.2A2.2 2.2 0 0 0 5 19.7z"/><path d="M5 19.7A1.3 1.3 0 0 0 6.3 21H19M9 7.5h6M9 11h4"/></svg><span>สูตร</span></a>
-      <a href="#/tools" data-route="tools"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h9M17 6.5h3M4 12h3M11 12h9M4 17.5h11M19 17.5h1"/><circle cx="15" cy="6.5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17.5" r="2"/></svg><span>เครื่องมือ</span></a>
+      <a href="#/calc" data-route="calc"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="7" r="2.6"/><circle cx="17" cy="17" r="2.6"/><path d="M19 5 5 19"/></svg><span data-i18n="nav.calc">Ratio</span></a>
+      <a href="#/timer" data-route="timer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 9.5v4l2.6 2.2M9.5 2.5h5M12 2.5V6M18.5 6.5l1.5-1.5"/></svg><span data-i18n="nav.timer">Timer</span></a>
+      <a href="#/recipes" data-route="recipes"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.2A2.2 2.2 0 0 1 7.2 3H19v14.5H7.2A2.2 2.2 0 0 0 5 19.7z"/><path d="M5 19.7A1.3 1.3 0 0 0 6.3 21H19M9 7.5h6M9 11h4"/></svg><span data-i18n="nav.recipes">Recipes</span></a>
+      <a href="#/tools" data-route="tools"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h9M17 6.5h3M4 12h3M11 12h9M4 17.5h11M19 17.5h1"/><circle cx="15" cy="6.5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17.5" r="2"/></svg><span data-i18n="nav.tools">Tools</span></a>
     </div>
   </nav>
 

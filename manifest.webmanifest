@@ -1,8 +1,8 @@
 {
-  "name": "Share Coffee — คำนวณ จับเวลา แชร์สูตรกาแฟ",
+  "name": "Share Coffee — Brew by the numbers",
   "short_name": "Share Coffee",
-  "description": "คำนวณอัตราส่วนกาแฟ จับเวลาชงแบบนำทาง และแชร์สูตรให้เพื่อนด้วยลิงก์เดียว",
-  "lang": "th",
+  "description": "Coffee ratio calculator, guided brew timer and shareable recipes · English / ภาษาไทย",
+  "lang": "en",
   "start_url": "./#/calc",
   "scope": "./",
   "display": "standalone",

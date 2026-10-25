@@ -15,6 +15,7 @@
 | **แชร์** | สูตรถูกบีบอัด (deflate) แล้วฝังไว้ในลิงก์ — ไม่ต้องมีเซิร์ฟเวอร์หรือบัญชี, QR code, Web Share, ส่งทาง LINE, ผู้รับกดบันทึกเป็นสูตรของตัวเองได้ |
 | **เครื่องมือ** | Extraction yield (EY%) + Brew Control Chart, วันพักเมล็ด, อุณหภูมิน้ำตามระดับคั่ว, ระดับการบด, แปลงหน่วย, ต้นทุนต่อแก้ว |
 | **PWA** | ติดตั้งเป็นแอปและใช้งานออฟไลน์ได้ |
+| **2 ภาษา** | English (ค่าเริ่มต้น) / ไทย — สลับได้ที่ปุ่ม EN/TH บนแถบด้านบน ระบบจำภาษาที่เลือก และลิงก์ที่แชร์จากโหมดไทยจะเปิดเป็นภาษาไทยให้ผู้รับที่ยังไม่เคยตั้งค่า |
 
 ## ดีไซน์ & Motion
 
@@ -45,7 +46,8 @@ Push เข้า `master` แล้ว GitHub Actions (`.github/workflows/deplo
 index.html            app shell, nav, footer
 css/styles.css        design tokens + components
 js/main.js            router, view transitions, shared-link import, service worker
-js/data.js            methods, grind levels, presets, standard recipes
+js/i18n.js            EN/TH strings, t() / L() helpers, language persistence
+js/data.js            methods, grind levels, presets, standard recipes (bilingual)
 js/motion.js          springs, reveals, tilt, magnetic, burst, drag-to-dismiss
 js/share.js           encode/decode recipe links, QR, share sheet
 js/views/*.js         calc · timer · recipes · tools

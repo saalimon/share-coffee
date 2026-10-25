@@ -1,6 +1,6 @@
 // Recipe persistence: standard library + "my recipes" (localStorage) + ad-hoc (session).
 
-import { RECIPES } from './data.js';
+import { RECIPES, STANDARD_IDS, localizeRecipe } from './data.js';
 import { store, session } from './util.js';
 import { sanitizeRecipe } from './sanitize.js';
 
@@ -43,11 +43,13 @@ export function getRecipe(id) {
     const r = session.get(ADHOC_KEY, null);
     return r ? sanitizeRecipe(r, 'adhoc') : null;
   }
-  return RECIPES.find((r) => r.id === id) || getMine().find((r) => r.id === id) || null;
+  const std = RECIPES.find((r) => r.id === id);
+  if (std) return localizeRecipe(std);
+  return getMine().find((r) => r.id === id) || null;
 }
 
 export const isMine = (r) => !!r && String(r.id).startsWith('my-');
-export const isStandard = (r) => !!r && RECIPES.some((x) => x.id === r.id);
+export const isStandard = (r) => !!r && STANDARD_IDS.has(r.id);
 
 function notify() {
   window.dispatchEvent(new CustomEvent('recipes:changed'));

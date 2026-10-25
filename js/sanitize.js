@@ -3,6 +3,7 @@
 
 import { METHODS, GRINDS } from './data.js';
 import { clamp } from './util.js';
+import { t } from './i18n.js';
 
 const str = (v, max) => String(v ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, max);
 const num = (v, lo, hi, fallback) => {
@@ -25,7 +26,7 @@ export function sanitizeRecipe(o, id) {
     .map((s) => {
       const out = {
         t: Math.round(num(s.t, 0, time, 0)),
-        label: str(s.label, 80) || 'ขั้นตอน',
+        label: str(s.label, 80) || t('ed.stepDefault'),
       };
       const w = optNum(s.water, 0, 20000);
       if (w !== null) out.water = Math.round(w * 10) / 10;
@@ -36,10 +37,10 @@ export function sanitizeRecipe(o, id) {
       return out;
     })
     .sort((a, b) => a.t - b.t);
-  if (!steps.length) steps = [{ t: 0, label: 'เริ่ม' }];
+  if (!steps.length) steps = [{ t: 0, label: t('ed.start') }];
   const r = {
     id: id ?? o.id ?? null,
-    name: str(o.name, 80) || 'สูตรไม่มีชื่อ',
+    name: str(o.name, 80) || t('ed.untitled'),
     author: str(o.author, 60),
     method: METHODS[o.method] ? o.method : 'other',
     dose: Math.round(num(o.dose, 0.1, 2000, 15) * 10) / 10,

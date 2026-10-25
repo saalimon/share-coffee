@@ -180,7 +180,8 @@ ol, ul { margin: 0; padding: 0; list-style: none; }
 .brand { display: inline-flex; align-items: center; gap: 10px; font: 600 17px/1 var(--f-display); letter-spacing: -0.045em; justify-self: start; }
 .brand-mark { width: 26px; height: 26px; fill: none; stroke: #fff; stroke-width: 1.7; stroke-linecap: round; }
 .brand-dim { color: var(--muted); font-weight: 400; margin: 0 1px; }
-.nav-actions { justify-self: end; display: flex; gap: 8px; }
+.nav-actions { justify-self: end; display: flex; align-items: center; gap: 8px; }
+.lang-seg > button { min-width: 38px; padding-left: 10px; padding-right: 10px; font-size: 12px; letter-spacing: 0.02em; }
 
 /* stroke-draw (Vivus-style) */
 .draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.4s var(--ease-in-out) forwards; }
@@ -802,6 +803,7 @@ input[type="date"].input { color-scheme: dark; }
   .nav .nav-tabs { display: none; }
   .nav-share-label { display: none; }
   .nav-actions .btn { width: 40px; padding: 0; }
+  .lang-seg > button { min-height: 30px; min-width: 34px; }
   .tabbar {
     display: block; position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 50;
     transform: translateX(-50%);
